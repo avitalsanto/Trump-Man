@@ -44,12 +44,15 @@
         .stats-bar {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 10px 24px;
-            margin-bottom: 14px;
+            border-radius: 14px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
             display: flex;
-            gap: 16px;
+            gap: 6px;
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
             -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
         }
@@ -57,37 +60,39 @@
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 12px;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 8px;
             background: rgba(255, 255, 255, 0.04);
+            white-space: nowrap;
         }
 
         .stat-label {
             color: rgba(255,255,255,0.4);
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         .stat-value-score {
             color: #34d399;
             font-weight: 800;
-            font-size: 1.15rem;
+            font-size: 0.95rem;
         }
         .stat-value-lives {
             color: #f87171;
-            font-size: 1rem;
-            letter-spacing: 2px;
+            font-size: 0.85rem;
+            font-weight: 700;
         }
         .stat-value-level {
             color: #a78bfa;
             font-weight: 700;
+            font-size: 0.85rem;
         }
         .stat-value-combo {
             color: #fbbf24;
             font-weight: 700;
-            min-width: 24px;
+            font-size: 0.85rem;
         }
 
         #canvas-container {
@@ -204,22 +209,24 @@
                 background: #050510;
             }
             .stats-bar {
-                padding: 8px 14px;
-                gap: 8px;
-                border-radius: 14px;
-                margin-bottom: 6px;
+                padding: 5px 8px;
+                gap: 4px;
+                border-radius: 10px;
+                margin-bottom: 4px;
                 background: rgba(255, 255, 255, 0.08);
                 border-color: rgba(255, 255, 255, 0.15);
             }
             .stat-item {
-                padding: 5px 10px;
-                gap: 5px;
-                border-radius: 8px;
+                padding: 3px 7px;
+                gap: 4px;
+                border-radius: 6px;
                 background: rgba(255, 255, 255, 0.06);
             }
-            .stat-label { font-size: 0.55rem; color: rgba(255,255,255,0.5); }
-            .stat-value-score { font-size: 1.05rem; }
-            .stat-value-lives { font-size: 0.95rem; }
+            .stat-label { font-size: 0.5rem; color: rgba(255,255,255,0.5); }
+            .stat-value-score { font-size: 0.85rem; }
+            .stat-value-lives { font-size: 0.75rem; }
+            .stat-value-level { font-size: 0.75rem; }
+            .stat-value-combo { font-size: 0.75rem; }
             .title-glow { font-size: 2.6rem; }
             .subtitle { font-size: 0.75rem; letter-spacing: 4px; }
             #msg { font-size: 0.85rem; margin: 20px 0; }
@@ -273,10 +280,6 @@
         <div class="stat-item">
             <span class="stat-label">שלב</span>
             <span class="stat-value-level" id="level">1</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">רצף</span>
-            <span class="stat-value-combo" id="combo">-</span>
         </div>
     </div>
 
@@ -1033,11 +1036,12 @@ function setup() {
 
 function updateUI() {
     scoreDisplay.innerText = `$${game.score.toLocaleString()}`;
-    livesDisplay.innerHTML = '<span style="color:#f87171">' + '\u2764'.repeat(Math.max(0, game.lives)) + '</span>';
+    livesDisplay.innerHTML = `\u2764\uFE0F ${Math.max(0, game.lives)}`;
     levelDisplay.innerText = game.level;
-    comboDisplay.innerText = game.combo > 1 ? `x${game.combo}` : '-';
-    if (game.combo > 1) comboDisplay.style.color = `hsl(${40 + game.combo * 8}, 90%, 60%)`;
-    else comboDisplay.style.color = '#fbbf24';
+    if (comboDisplay) {
+        comboDisplay.innerText = game.combo > 1 ? `x${game.combo}` : '-';
+        comboDisplay.style.color = game.combo > 1 ? `hsl(${40 + game.combo * 8}, 90%, 60%)` : '#fbbf24';
+    }
 }
 
 function checkCollisions() {
@@ -1458,17 +1462,17 @@ let gameScale = 1;
 const gameWrapper = document.getElementById('game-wrapper');
 
 function resizeGame() {
-    const margin = 8;
+    const isMobile = window.innerWidth <= 700;
+    const margin = isMobile ? 12 : 16;
     const maxW = window.innerWidth - margin * 2;
     const maxH = window.innerHeight - margin * 2;
-    const statsH = window.innerWidth <= 700 ? 42 : 56;
+    const statsH = isMobile ? 30 : 44;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
     const scaleW = maxW / wrapperW;
     const scaleH = maxH / wrapperH;
     gameScale = Math.min(scaleW, scaleH);
     gameWrapper.style.transform = `scale(${gameScale})`;
-    gameWrapper.style.marginTop = '';
 }
 
 window.addEventListener('resize', resizeGame);

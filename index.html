@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>טראמפמן</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap');
@@ -22,6 +22,7 @@
             justify-content: center;
             overflow: hidden;
             touch-action: none;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         #bg-canvas {
@@ -1577,31 +1578,39 @@ let gameScale = 1;
 let canvasOffsetX = 0;
 const gameWrapper = document.getElementById('game-wrapper');
 
+function getViewport() {
+    const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    let vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)')) || 0;
+    vh -= safeBottom;
+    return { vw, vh };
+}
+
 function resizeGame() {
-    const isMobile = window.innerWidth <= 700;
+    const { vw, vh } = getViewport();
+    const isMobile = vw <= 700;
     const margin = isMobile ? 3 : 16;
     const statsH = isMobile ? 46 : 40;
-    const maxW = window.innerWidth - margin * 2;
-    const maxH = window.innerHeight - margin * 2;
+    const maxW = vw - margin * 2;
+    const maxH = vh - margin * 2;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
     const scaleW = maxW / wrapperW;
     const scaleH = maxH / wrapperH;
     gameScale = Math.min(scaleW, scaleH);
     const renderedH = wrapperH * gameScale;
-    const marginTop = Math.max(0, (window.innerHeight - renderedH) / 2);
+    const marginTop = Math.max(0, (vh - renderedH) / 2);
     gameWrapper.style.transform = `scale(${gameScale})`;
     gameWrapper.style.marginTop = marginTop + 'px';
 }
 
 function recalcCanvasSize() {
-    const isMobile = window.innerWidth <= 700;
+    const { vw, vh } = getViewport();
+    const isMobile = vw <= 700;
     const mapW = mapCols * TILE_SIZE;
     const mapH = mapRows * TILE_SIZE;
     const statsH = isMobile ? 46 : 40;
     if (isMobile) {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
         const targetAspect = (vw - 6) / (vh - 6 - statsH);
         const mapAspect = mapW / mapH;
         if (targetAspect > mapAspect) {
@@ -1620,6 +1629,9 @@ function recalcCanvasSize() {
     }
 }
 window.addEventListener('resize', () => { recalcCanvasSize(); resizeGame(); });
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => { recalcCanvasSize(); resizeGame(); });
+}
 
 initBg(); setup(); resizeGame();
 drawBackground(); drawWalls(); drawDots();

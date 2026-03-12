@@ -209,7 +209,7 @@
                 background: #050510;
             }
             .stats-bar {
-                padding: 6px 6px;
+                padding: 7px 7px;
                 gap: 4px;
                 border-radius: 10px;
                 margin-bottom: 4px;
@@ -217,15 +217,15 @@
                 border-color: rgba(255, 255, 255, 0.15);
             }
             .stat-item {
-                padding: 6px 8px;
+                padding: 7px 10px;
                 gap: 4px;
                 border-radius: 6px;
             }
-            .stat-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
-            .stat-value-score { font-size: 1.15rem; }
-            .stat-value-lives { font-size: 1rem; }
-            .stat-value-level { font-size: 1rem; }
-            .stat-value-combo { font-size: 1rem; }
+            .stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+            .stat-value-score { font-size: 1.3rem; }
+            .stat-value-lives { font-size: 1.1rem; }
+            .stat-value-level { font-size: 1.1rem; }
+            .stat-value-combo { font-size: 1.1rem; }
             .title-glow { font-size: 2.6rem; }
             .subtitle { font-size: 0.75rem; letter-spacing: 4px; }
             #msg { font-size: 0.85rem; margin: 20px 0; }
@@ -640,7 +640,7 @@ class Pacman extends Entity {
             }
             if (!this.canMove(this.dir)) this.dir = { x: 0, y: 0 };
         }
-        const speed = this.baseSpeed * game.speedMultiplier;
+        const speed = this.baseSpeed * game.speedMultiplier * (game.speedBoost > 0 ? 2 : 1);
         this.x += this.dir.x * speed;
         this.y += this.dir.y * speed;
         if (this.x < -TILE_SIZE) this.x = mapCols * TILE_SIZE;
@@ -1014,6 +1014,7 @@ function setup() {
     game.totalPellets = 0; game.pelletsEaten = 0; game.powerMode = 0;
     game.combo = 0; game.comboTimer = 0; game.ghostsEatenThisPower = 0;
     game.freezeTimer = 0; game.deathAnim = 0; game.winAnim = 0;
+    game.speedBoost = 0; game.magnetTimer = 0;
     game.transitioning = false;
     game.speedMultiplier = game.level >= 6 ? 2 : 1;
     game.graceTimer = 0;
@@ -1084,6 +1085,24 @@ function checkCollisions() {
         }
     });
 
+    if (game.magnetTimer > 0) {
+        dots.forEach(dot => {
+            if (dot.eaten) return;
+            const dr = Math.abs(dot.r - pPos.row), dc = Math.abs(dot.c - pPos.col);
+            if (dr + dc <= 3 && !(dr === 0 && dc === 0)) {
+                dot.eaten = true; game.pelletsEaten++;
+                const cx = dot.c * TILE_SIZE + TILE_SIZE / 2;
+                const cy = dot.r * TILE_SIZE + TILE_SIZE / 2;
+                game.combo++; game.comboTimer = 150;
+                const bonus = Math.min(game.combo, 20);
+                game.score += 10 + bonus;
+                spawnParticles(cx, cy, '#a78bfa', 3, 2, 12);
+                if (game.pelletsEaten === game.totalPellets) winLevel();
+            }
+        });
+        updateUI();
+    }
+
     // Bonus item pickup
     if (game.bonusItem) {
         const bi = game.bonusItem;
@@ -1117,8 +1136,38 @@ function checkCollisions() {
                 triggerFlash('rgba(248,113,113,0.25)');
                 playTone(523, 0.1, 'sine', 0.06);
                 setTimeout(() => playTone(784, 0.15, 'sine', 0.06), 80);
+            } else if (bi.type === 'speed') {
+                game.speedBoost = 180;
+                spawnFloatingText(cx, cy, '!מהירות', '#facc15');
+                spawnParticles(cx, cy, '#facc15', 25, 7, 35);
+                triggerFlash('rgba(250,204,21,0.25)');
+                playTone(660, 0.08, 'sawtooth', 0.04);
+                setTimeout(() => playTone(880, 0.1, 'sawtooth', 0.04), 60);
+                setTimeout(() => playTone(1100, 0.12, 'sawtooth', 0.04), 120);
+            } else if (bi.type === 'magnet') {
+                game.magnetTimer = 300;
+                spawnFloatingText(cx, cy, '!מגנט', '#a78bfa');
+                spawnParticles(cx, cy, '#a78bfa', 25, 7, 35);
+                triggerFlash('rgba(167,139,250,0.25)');
+                playTone(440, 0.1, 'sine', 0.05);
+                setTimeout(() => playTone(660, 0.15, 'sine', 0.05), 70);
+            } else if (bi.type === 'bomb') {
+                let bombScore = 0;
+                ghosts.forEach(g => {
+                    if (!g.eaten) {
+                        g.eaten = true;
+                        bombScore += 400;
+                        const gx = g.x + TILE_SIZE / 2, gy = g.y + TILE_SIZE / 2;
+                        spawnParticles(gx, gy, '#ef4444', 20, 6, 30);
+                    }
+                });
+                game.score += bombScore;
+                spawnFloatingText(cx, cy, `!בום +$${bombScore}`, '#ef4444');
+                triggerFlash('rgba(239,68,68,0.35)');
+                playTone(200, 0.2, 'sawtooth', 0.08);
+                setTimeout(() => playTone(100, 0.3, 'square', 0.06), 100);
             }
-            triggerShake(4);
+            triggerShake(bi.type === 'bomb' ? 8 : 4);
             game.bonusItem = null;
             game.bonusCooldown = 400 + Math.floor(Math.random() * 400);
             updateUI();
@@ -1205,8 +1254,9 @@ function spawnBonusItem() {
     });
     if (empties.length === 0) return;
     const pos = empties[Math.floor(Math.random() * empties.length)];
-    const types = ['money', 'money', 'money', 'diamond', 'freeze', 'heart'];
-    const type = types[Math.floor(Math.random() * types.length)];
+    const available = ['money', 'money', 'money', 'diamond', 'freeze', 'heart', 'speed', 'magnet'];
+    if (game.level >= 3) available.push('bomb');
+    const type = available[Math.floor(Math.random() * available.length)];
     game.bonusItem = { x: pos.x, y: pos.y, type, life: 420 };
 }
 
@@ -1274,6 +1324,42 @@ function drawBonusItem() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('❤️', 0, 0);
+    } else if (bi.type === 'speed') {
+        glowGrad.addColorStop(0, 'rgba(250, 204, 21, 0.4)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#facc15';
+        ctx.font = `800 ${Math.round(18 * pulse)}px Rubik`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚡', 0, 0);
+    } else if (bi.type === 'magnet') {
+        glowGrad.addColorStop(0, 'rgba(167, 139, 250, 0.4)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#a78bfa';
+        ctx.font = `800 ${Math.round(18 * pulse)}px Rubik`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🧲', 0, 0);
+    } else if (bi.type === 'bomb') {
+        glowGrad.addColorStop(0, 'rgba(239, 68, 68, 0.5)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.font = `800 ${Math.round(18 * pulse)}px Rubik`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💣', 0, 0);
     }
     ctx.restore();
 }
@@ -1402,6 +1488,8 @@ function loop() {
     if (game.nearMissCooldown > 0) game.nearMissCooldown--;
     if (game.powerMode > 0) game.powerMode--;
     if (game.freezeTimer > 0) game.freezeTimer--;
+    if (game.speedBoost > 0) game.speedBoost--;
+    if (game.magnetTimer > 0) game.magnetTimer--;
     if (game.comboTimer > 0) { game.comboTimer--; if (game.comboTimer <= 0) { game.combo = 0; updateUI(); } }
     if (game.deathAnim > 0) { game.deathAnim++; if (game.deathAnim > 60) game.deathAnim = 60; }
 
@@ -1489,17 +1577,23 @@ const gameWrapper = document.getElementById('game-wrapper');
 
 function resizeGame() {
     const isMobile = window.innerWidth <= 700;
-    const margin = isMobile ? 3 : 16;
-    const maxW = window.innerWidth - margin * 2;
-    const maxH = window.innerHeight - margin * 2;
-    const statsH = isMobile ? 42 : 40;
+    const statsH = isMobile ? 46 : 40;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
-    const scaleW = maxW / wrapperW;
-    const scaleH = maxH / wrapperH;
-    gameScale = Math.min(scaleW, scaleH);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    if (isMobile && wrapperH !== wrapperW) {
+        const equalScale = (vh - vw) / (wrapperH - wrapperW);
+        const maxScale = Math.min((vw - 4) / wrapperW, (vh - 4) / wrapperH);
+        gameScale = Math.min(equalScale, maxScale);
+    } else {
+        const margin = 16;
+        gameScale = Math.min((vw - margin * 2) / wrapperW, (vh - margin * 2) / wrapperH);
+    }
+
     const renderedH = wrapperH * gameScale;
-    const marginTop = Math.max(0, (window.innerHeight - renderedH) / 2);
+    const marginTop = Math.max(0, (vh - renderedH) / 2);
     gameWrapper.style.transform = `scale(${gameScale})`;
     gameWrapper.style.marginTop = marginTop + 'px';
 }

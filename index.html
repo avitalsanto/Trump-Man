@@ -18,7 +18,7 @@
             color: #fff;
             font-family: 'Rubik', -apple-system, sans-serif;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             overflow: hidden;
             touch-action: none;
@@ -38,7 +38,7 @@
             flex-direction: column;
             align-items: center;
             z-index: 1;
-            transform-origin: center center;
+            transform-origin: top center;
         }
 
         .stats-bar {
@@ -209,7 +209,7 @@
                 background: #050510;
             }
             .stats-bar {
-                padding: 5px 5px;
+                padding: 6px 6px;
                 gap: 4px;
                 border-radius: 10px;
                 margin-bottom: 4px;
@@ -217,15 +217,15 @@
                 border-color: rgba(255, 255, 255, 0.15);
             }
             .stat-item {
-                padding: 5px 6px;
+                padding: 6px 8px;
                 gap: 4px;
                 border-radius: 6px;
             }
-            .stat-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
-            .stat-value-score { font-size: 1rem; }
-            .stat-value-lives { font-size: 0.85rem; }
-            .stat-value-level { font-size: 0.85rem; }
-            .stat-value-combo { font-size: 0.85rem; }
+            .stat-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+            .stat-value-score { font-size: 1.15rem; }
+            .stat-value-lives { font-size: 1rem; }
+            .stat-value-level { font-size: 1rem; }
+            .stat-value-combo { font-size: 1rem; }
             .title-glow { font-size: 2.6rem; }
             .subtitle { font-size: 0.75rem; letter-spacing: 4px; }
             #msg { font-size: 0.85rem; margin: 20px 0; }
@@ -1492,13 +1492,16 @@ function resizeGame() {
     const margin = isMobile ? 3 : 16;
     const maxW = window.innerWidth - margin * 2;
     const maxH = window.innerHeight - margin * 2;
-    const statsH = isMobile ? 34 : 40;
+    const statsH = isMobile ? 42 : 40;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
     const scaleW = maxW / wrapperW;
     const scaleH = maxH / wrapperH;
     gameScale = Math.min(scaleW, scaleH);
+    const renderedH = wrapperH * gameScale;
+    const marginTop = Math.max(0, (window.innerHeight - renderedH) / 2);
     gameWrapper.style.transform = `scale(${gameScale})`;
+    gameWrapper.style.marginTop = marginTop + 'px';
 }
 
 window.addEventListener('resize', resizeGame);

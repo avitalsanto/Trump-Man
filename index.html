@@ -18,7 +18,7 @@
             color: #fff;
             font-family: 'Rubik', -apple-system, sans-serif;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
             overflow: hidden;
             touch-action: none;
@@ -38,7 +38,7 @@
             flex-direction: column;
             align-items: center;
             z-index: 1;
-            transform-origin: top center;
+            transform-origin: center center;
         }
 
         .stats-bar {
@@ -237,49 +237,8 @@
                     0 0 0 1px rgba(255,255,255,0.12);
             }
             #flash-overlay { border-radius: 10px; }
-            #mobile-footer {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 12px;
-                margin-top: 10px;
-                opacity: 0.7;
-            }
-            #mobile-footer .mobile-title {
-                font-size: 1.2rem;
-                font-weight: 800;
-                color: #fbbf24;
-                letter-spacing: 2px;
-            }
-            #mobile-footer .mobile-hint {
-                font-size: 0.65rem;
-                color: rgba(255,255,255,0.3);
-                letter-spacing: 1.5px;
-                display: flex;
-                gap: 16px;
-                align-items: center;
-            }
-            #mobile-footer .hint-icon {
-                width: 28px;
-                height: 28px;
-                border-radius: 8px;
-                border: 1px solid rgba(255,255,255,0.12);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.7rem;
-                color: rgba(255,255,255,0.25);
-            }
-            #mobile-high {
-                font-size: 0.6rem;
-                color: rgba(255,255,255,0.2);
-                letter-spacing: 1px;
-            }
         }
 
-        @media (min-width: 701px) {
-            #mobile-footer { display: none; }
-        }
 
         @keyframes screenFlash {
             0% { opacity: 0.3; }
@@ -336,15 +295,6 @@
         </div>
     </div>
 
-    <div id="mobile-footer">
-        <div class="mobile-title">טראמפמן</div>
-        <div class="mobile-hint">
-            <div class="hint-icon">☝️</div>
-            <span>הקש לכיוון התנועה או החלק</span>
-            <div class="hint-icon">👆</div>
-        </div>
-        <div id="mobile-high"></div>
-    </div>
 
 </div>
 
@@ -405,46 +355,61 @@ scaredImgs.forEach(s => { s.img.onload = () => { s.loaded = true; }; });
 
 const MAPS = [
     [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,3,0,0,0,0,0,1,0,0,0,0,0,3,1],
-        [1,0,1,1,0,1,0,0,0,1,0,1,1,0,1],
-        [1,0,0,0,0,1,0,1,0,1,0,0,0,0,1],
-        [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
-        [1,0,1,0,1,1,4,4,4,1,1,0,1,0,1],
-        [0,0,0,0,1,4,4,4,4,4,1,0,0,0,0],
-        [1,0,1,0,1,1,1,1,1,1,1,0,1,0,1],
-        [1,0,0,0,0,0,0,5,0,0,0,0,0,0,1],
-        [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1],
-        [1,3,0,0,0,0,0,0,0,0,0,0,0,3,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,0,1,1,0,1,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,1,0,0,0,1,0,1],
+        [1,0,0,0,1,0,0,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [0,0,1,4,4,4,1,0,0],
+        [1,0,1,4,4,4,1,0,1],
+        [1,0,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,0,0,1,0,0,0,1],
+        [1,0,1,0,0,0,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,0,0,5,0,0,0,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,1,1,1,1,1,1,1,1]
     ],
     [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,3,0,0,0,0,0,0,0,0,0,0,0,3,1],
-        [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,1,1,0,1,4,4,4,1,0,1,1,0,1],
-        [0,0,0,0,0,1,4,4,4,1,0,0,0,0,0],
-        [1,0,1,1,0,1,1,1,1,1,0,1,1,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,1,0,1,0,1,5,1,0,1,0,1,0,1],
-        [1,3,0,0,0,0,0,0,0,0,0,0,0,3,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,0,1,0,1,0,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,1,0,1,0,1,0,1,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,1,0,0,0,1,0,1],
+        [0,0,1,4,4,4,1,0,0],
+        [1,0,1,4,4,4,1,0,1],
+        [1,0,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,1,0,0,0,1,0,1],
+        [1,1,0,1,0,1,0,1,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,1,0,5,0,1,0,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,1,1,1,1,1,1,1,1]
     ],
     [
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,3,0,0,0,0,0,0,1,0,0,0,0,0,0,3,1],
-        [1,0,1,0,1,1,1,0,0,0,1,1,1,0,1,0,1],
-        [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
-        [1,0,1,0,1,0,1,0,0,0,1,0,1,0,1,0,1],
-        [1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
-        [0,0,1,0,1,1,4,4,4,4,4,1,1,0,1,0,0],
-        [1,0,0,0,0,4,4,4,4,4,4,4,0,0,0,0,1],
-        [1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1],
-        [1,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,1],
-        [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1],
-        [1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
-        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,0,1,0,1,0,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,1,0,0,1,0,0,1,1],
+        [1,0,0,1,0,1,0,0,1],
+        [1,0,1,0,0,0,1,0,1],
+        [0,0,1,4,4,4,1,0,0],
+        [1,0,1,4,4,4,1,0,1],
+        [1,0,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,0,1,0,1,0,0,1],
+        [1,1,0,0,1,0,0,1,1],
+        [1,0,0,0,0,0,0,0,1],
+        [1,0,1,0,5,0,1,0,1],
+        [1,3,0,0,0,0,0,3,1],
+        [1,1,1,1,1,1,1,1,1]
     ]
 ];
 
@@ -1493,27 +1458,17 @@ let gameScale = 1;
 const gameWrapper = document.getElementById('game-wrapper');
 
 function resizeGame() {
-    const isMobile = window.innerWidth <= 700;
-    const margin = isMobile ? 4 : 16;
+    const margin = 8;
     const maxW = window.innerWidth - margin * 2;
-    const footer = document.getElementById('mobile-footer');
-    const footerH = (isMobile && footer) ? 80 : 0;
-    const maxH = window.innerHeight - margin * 2 - footerH;
-    const statsH = isMobile ? 42 : 56;
+    const maxH = window.innerHeight - margin * 2;
+    const statsH = window.innerWidth <= 700 ? 42 : 56;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
     const scaleW = maxW / wrapperW;
     const scaleH = maxH / wrapperH;
     gameScale = Math.min(scaleW, scaleH);
     gameWrapper.style.transform = `scale(${gameScale})`;
-    const scaledH = wrapperH * gameScale + footerH;
-    const topOffset = Math.max(margin, (window.innerHeight - scaledH) / 2);
-    gameWrapper.style.marginTop = `${topOffset}px`;
-
-    const mobileHigh = document.getElementById('mobile-high');
-    if (mobileHigh && game.highScore > 0) {
-        mobileHigh.textContent = `שיא: $${game.highScore.toLocaleString()}`;
-    }
+    gameWrapper.style.marginTop = '';
 }
 
 window.addEventListener('resize', resizeGame);

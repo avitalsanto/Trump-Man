@@ -994,20 +994,19 @@ function drawDots() {
 }
 
 function drawBackground() {
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    const grad = ctx.createLinearGradient(-canvasOffsetX, 0, canvas.width - canvasOffsetX, canvas.height);
     grad.addColorStop(0, '#0d0d1f');
     grad.addColorStop(0.5, '#0a0a1a');
     grad.addColorStop(1, '#0e0b1e');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(-canvasOffsetX, 0, canvas.width, canvas.height);
 }
 
 function setup() {
     currentMap = MAPS[(game.level - 1) % MAPS.length].map(r => [...r]);
     mapRows = currentMap.length;
     mapCols = currentMap[0].length;
-    canvas.width = mapCols * TILE_SIZE;
-    canvas.height = mapRows * TILE_SIZE;
+    recalcCanvasSize();
 
     dots = []; ghosts = [];
     particles.length = 0; trails.length = 0; floatingTexts.length = 0;
@@ -1370,7 +1369,7 @@ function drawPowerBar() {
     const pct = game.powerMode / maxPower;
     const barW = canvas.width - 20;
     const barH = 4;
-    const barX = 10;
+    const barX = 10 - canvasOffsetX;
     const barY = canvas.height - 10;
 
     ctx.save();
@@ -1394,11 +1393,12 @@ function drawReadyOverlay() {
     ctx.save();
     const alpha = Math.min(0.7, game.readyTimer / 60);
     ctx.fillStyle = `rgba(10, 10, 20, ${alpha})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(-canvasOffsetX, 0, canvas.width, canvas.height);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const mapW = mapCols * TILE_SIZE;
+    const cx = mapW / 2, cy = canvas.height / 2;
 
     if (game.readyTimer > 80) {
         ctx.fillStyle = '#fbbf24';
@@ -1427,7 +1427,7 @@ function drawFreezeEffect() {
     ctx.save();
     ctx.strokeStyle = `rgba(103, 232, 249, ${0.15 * (game.freezeTimer / 180)})`;
     ctx.lineWidth = 2;
-    ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+    ctx.strokeRect(3 - canvasOffsetX, 3, canvas.width - 6, canvas.height - 6);
     ctx.restore();
 }
 
@@ -1476,6 +1476,7 @@ function loop() {
     updateShake();
     ctx.save();
     ctx.translate(game.shakeX, game.shakeY);
+    ctx.translate(canvasOffsetX, 0);
 
     drawBackground();
     drawWalls();
@@ -1515,7 +1516,7 @@ function loop() {
         const intensity = game.powerMode > 90 ? 1 : game.powerMode / 90;
         ctx.strokeStyle = `rgba(99, 102, 241, ${0.25 * intensity})`;
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+        ctx.strokeRect(2 - canvasOffsetX, 2, canvas.width - 4, canvas.height - 4);
     }
 
     drawReadyOverlay();
@@ -1551,7 +1552,7 @@ canvas.addEventListener('touchend', e => {
         else setDir(0, swipeDy > 0 ? 1 : -1);
     } else {
         const rect = canvas.getBoundingClientRect();
-        const tapX = (endX - rect.left) * (canvas.width / rect.width);
+        const tapX = (endX - rect.left) * (canvas.width / rect.width) - canvasOffsetX;
         const tapY = (endY - rect.top) * (canvas.height / rect.height);
         const playerCx = player.x + TILE_SIZE / 2;
         const playerCy = player.y + TILE_SIZE / 2;
@@ -1573,32 +1574,52 @@ startBtn.onclick = () => {
 };
 
 let gameScale = 1;
+let canvasOffsetX = 0;
 const gameWrapper = document.getElementById('game-wrapper');
 
 function resizeGame() {
     const isMobile = window.innerWidth <= 700;
+    const margin = isMobile ? 3 : 16;
     const statsH = isMobile ? 46 : 40;
+    const maxW = window.innerWidth - margin * 2;
+    const maxH = window.innerHeight - margin * 2;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    if (isMobile && wrapperH !== wrapperW) {
-        const equalScale = (vh - vw) / (wrapperH - wrapperW);
-        const maxScale = Math.min((vw - 4) / wrapperW, (vh - 4) / wrapperH);
-        gameScale = Math.min(equalScale, maxScale);
-    } else {
-        const margin = 16;
-        gameScale = Math.min((vw - margin * 2) / wrapperW, (vh - margin * 2) / wrapperH);
-    }
-
+    const scaleW = maxW / wrapperW;
+    const scaleH = maxH / wrapperH;
+    gameScale = Math.min(scaleW, scaleH);
     const renderedH = wrapperH * gameScale;
-    const marginTop = Math.max(0, (vh - renderedH) / 2);
+    const marginTop = Math.max(0, (window.innerHeight - renderedH) / 2);
     gameWrapper.style.transform = `scale(${gameScale})`;
     gameWrapper.style.marginTop = marginTop + 'px';
 }
 
-window.addEventListener('resize', resizeGame);
+function recalcCanvasSize() {
+    const isMobile = window.innerWidth <= 700;
+    const mapW = mapCols * TILE_SIZE;
+    const mapH = mapRows * TILE_SIZE;
+    const statsH = isMobile ? 46 : 40;
+    if (isMobile) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const targetAspect = (vw - 6) / (vh - 6 - statsH);
+        const mapAspect = mapW / mapH;
+        if (targetAspect > mapAspect) {
+            canvas.width = Math.round(mapH * targetAspect);
+            canvas.height = mapH;
+            canvasOffsetX = Math.round((canvas.width - mapW) / 2);
+        } else {
+            canvas.width = mapW;
+            canvas.height = mapH;
+            canvasOffsetX = 0;
+        }
+    } else {
+        canvas.width = mapW;
+        canvas.height = mapH;
+        canvasOffsetX = 0;
+    }
+}
+window.addEventListener('resize', () => { recalcCanvasSize(); resizeGame(); });
 
 initBg(); setup(); resizeGame();
 drawBackground(); drawWalls(); drawDots();

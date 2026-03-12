@@ -209,23 +209,23 @@
                 background: #050510;
             }
             .stats-bar {
-                padding: 4px 4px;
-                gap: 3px;
+                padding: 5px 5px;
+                gap: 4px;
                 border-radius: 10px;
                 margin-bottom: 4px;
                 background: rgba(255, 255, 255, 0.08);
                 border-color: rgba(255, 255, 255, 0.15);
             }
             .stat-item {
-                padding: 3px 4px;
-                gap: 3px;
+                padding: 5px 6px;
+                gap: 4px;
                 border-radius: 6px;
             }
-            .stat-label { font-size: 0.45rem; color: rgba(255,255,255,0.5); }
-            .stat-value-score { font-size: 0.8rem; }
-            .stat-value-lives { font-size: 0.7rem; }
-            .stat-value-level { font-size: 0.7rem; }
-            .stat-value-combo { font-size: 0.7rem; }
+            .stat-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
+            .stat-value-score { font-size: 1rem; }
+            .stat-value-lives { font-size: 0.85rem; }
+            .stat-value-level { font-size: 0.85rem; }
+            .stat-value-combo { font-size: 0.85rem; }
             .title-glow { font-size: 2.6rem; }
             .subtitle { font-size: 0.75rem; letter-spacing: 4px; }
             #msg { font-size: 0.85rem; margin: 20px 0; }
@@ -757,7 +757,7 @@ class Ghost extends Entity {
                         const dist = (gp.col+d.x-target.col)**2 + (gp.row+d.y-target.row)**2;
                         if (dist < bestDist) { bestDist = dist; best = d; }
                     });
-                    const randomChance = Math.max(0.2, 0.45 - game.level * 0.04);
+                    const randomChance = Math.max(0.3, 0.6 - game.level * 0.03);
                     this.dir = Math.random() < randomChance ? valid[Math.floor(Math.random() * valid.length)] : best;
                 }
             } else {
@@ -1062,7 +1062,7 @@ function checkCollisions() {
             const cy = dot.r * TILE_SIZE + TILE_SIZE / 2;
 
             if (dot.type === 3) {
-                const powerDuration = Math.max(360, 600 - game.level * 30);
+                const powerDuration = Math.max(480, 720 - game.level * 20);
                 game.score += 50; game.powerMode = powerDuration; game.ghostsEatenThisPower = 0;
                 sfxPower(); triggerFlash('rgba(251,191,36,0.25)');
                 spawnParticles(cx, cy, '#fbbf24', 16, 5, 35);
@@ -1110,6 +1110,13 @@ function checkCollisions() {
                 spawnParticles(cx, cy, '#67e8f9', 20, 6, 35);
                 triggerFlash('rgba(103,232,249,0.2)');
                 playTone(600, 0.15, 'triangle', 0.05);
+            } else if (bi.type === 'heart') {
+                game.lives++;
+                spawnFloatingText(cx, cy, '+1 ❤️', '#f87171');
+                spawnParticles(cx, cy, '#f87171', 25, 7, 35);
+                triggerFlash('rgba(248,113,113,0.25)');
+                playTone(523, 0.1, 'sine', 0.06);
+                setTimeout(() => playTone(784, 0.15, 'sine', 0.06), 80);
             }
             triggerShake(4);
             game.bonusItem = null;
@@ -1198,7 +1205,7 @@ function spawnBonusItem() {
     });
     if (empties.length === 0) return;
     const pos = empties[Math.floor(Math.random() * empties.length)];
-    const types = ['money', 'money', 'money', 'diamond', 'freeze'];
+    const types = ['money', 'money', 'money', 'diamond', 'freeze', 'heart'];
     const type = types[Math.floor(Math.random() * types.length)];
     game.bonusItem = { x: pos.x, y: pos.y, type, life: 420 };
 }
@@ -1255,13 +1262,25 @@ function drawBonusItem() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('❄️', 0, 0);
+    } else if (bi.type === 'heart') {
+        glowGrad.addColorStop(0, 'rgba(248, 113, 113, 0.4)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f87171';
+        ctx.font = `800 ${Math.round(18 * pulse)}px Rubik`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('❤️', 0, 0);
     }
     ctx.restore();
 }
 
 function drawPowerBar() {
     if (game.powerMode <= 0) return;
-    const maxPower = Math.max(360, 600 - game.level * 30);
+    const maxPower = Math.max(480, 720 - game.level * 20);
     const pct = game.powerMode / maxPower;
     const barW = canvas.width - 20;
     const barH = 4;
@@ -1459,7 +1478,7 @@ canvas.addEventListener('touchend', e => {
 // ── Start ──
 startBtn.onclick = () => {
     ensureAudio();
-    game.score = 0; game.lives = 4; game.level = 1; game.combo = 0;
+    game.score = 0; game.lives = 5; game.level = 1; game.combo = 0;
     game.running = true; game.deathAnim = 0; game.tick = 0;
     finalScore.style.display = 'none';
     setup(); resizeGame(); overlay.classList.add('hidden'); updateUI(); loop();
@@ -1470,10 +1489,10 @@ const gameWrapper = document.getElementById('game-wrapper');
 
 function resizeGame() {
     const isMobile = window.innerWidth <= 700;
-    const margin = isMobile ? 8 : 16;
+    const margin = isMobile ? 3 : 16;
     const maxW = window.innerWidth - margin * 2;
     const maxH = window.innerHeight - margin * 2;
-    const statsH = isMobile ? 28 : 40;
+    const statsH = isMobile ? 34 : 40;
     const wrapperW = canvas.width;
     const wrapperH = canvas.height + statsH;
     const scaleW = maxW / wrapperW;

@@ -40,6 +40,7 @@
             align-items: center;
             z-index: 1;
             transform-origin: top center;
+            background: radial-gradient(ellipse at center, rgba(15, 15, 40, 0.4) 0%, transparent 70%);
         }
 
         .stats-bar {
@@ -100,11 +101,13 @@
             position: relative;
             border-radius: 16px;
             overflow: hidden;
+            border: 2px solid rgba(100, 160, 220, 0.3);
             box-shadow:
                 0 0 40px rgba(99, 102, 241, 0.12),
                 0 0 80px rgba(52, 211, 153, 0.06),
                 0 20px 60px rgba(0,0,0,0.6),
-                0 0 0 1px rgba(255,255,255,0.1);
+                0 0 0 1px rgba(255,255,255,0.1),
+                inset 0 0 30px rgba(100, 160, 220, 0.08);
         }
 
         canvas#pacCanvas {
@@ -207,7 +210,7 @@
 
         @media (max-width: 700px) {
             body {
-                background: #050510;
+                background: radial-gradient(ellipse at center, #0d0d25 0%, #050510 100%);
             }
             .stats-bar {
                 padding: 7px 7px;
@@ -237,11 +240,13 @@
             }
             #canvas-container {
                 border-radius: 10px;
+                border: 2px solid rgba(100, 160, 220, 0.35);
                 box-shadow:
                     0 0 50px rgba(99, 102, 241, 0.15),
                     0 0 100px rgba(52, 211, 153, 0.08),
                     0 15px 50px rgba(0,0,0,0.7),
-                    0 0 0 1px rgba(255,255,255,0.12);
+                    0 0 0 1px rgba(255,255,255,0.12),
+                    inset 0 0 40px rgba(100, 160, 220, 0.1);
             }
             #flash-overlay { border-radius: 10px; }
         }
@@ -995,19 +1000,20 @@ function drawDots() {
 }
 
 function drawBackground() {
-    const grad = ctx.createLinearGradient(-canvasOffsetX, 0, canvas.width - canvasOffsetX, canvas.height);
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     grad.addColorStop(0, '#0d0d1f');
     grad.addColorStop(0.5, '#0a0a1a');
     grad.addColorStop(1, '#0e0b1e');
     ctx.fillStyle = grad;
-    ctx.fillRect(-canvasOffsetX, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function setup() {
     currentMap = MAPS[(game.level - 1) % MAPS.length].map(r => [...r]);
     mapRows = currentMap.length;
     mapCols = currentMap[0].length;
-    recalcCanvasSize();
+    canvas.width = mapCols * TILE_SIZE;
+    canvas.height = mapRows * TILE_SIZE;
 
     dots = []; ghosts = [];
     particles.length = 0; trails.length = 0; floatingTexts.length = 0;
@@ -1370,7 +1376,7 @@ function drawPowerBar() {
     const pct = game.powerMode / maxPower;
     const barW = canvas.width - 20;
     const barH = 4;
-    const barX = 10 - canvasOffsetX;
+    const barX = 10;
     const barY = canvas.height - 10;
 
     ctx.save();
@@ -1394,12 +1400,11 @@ function drawReadyOverlay() {
     ctx.save();
     const alpha = Math.min(0.7, game.readyTimer / 60);
     ctx.fillStyle = `rgba(10, 10, 20, ${alpha})`;
-    ctx.fillRect(-canvasOffsetX, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const mapW = mapCols * TILE_SIZE;
-    const cx = mapW / 2, cy = canvas.height / 2;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
 
     if (game.readyTimer > 80) {
         ctx.fillStyle = '#fbbf24';
@@ -1428,7 +1433,7 @@ function drawFreezeEffect() {
     ctx.save();
     ctx.strokeStyle = `rgba(103, 232, 249, ${0.15 * (game.freezeTimer / 180)})`;
     ctx.lineWidth = 2;
-    ctx.strokeRect(3 - canvasOffsetX, 3, canvas.width - 6, canvas.height - 6);
+    ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
     ctx.restore();
 }
 
@@ -1477,7 +1482,6 @@ function loop() {
     updateShake();
     ctx.save();
     ctx.translate(game.shakeX, game.shakeY);
-    ctx.translate(canvasOffsetX, 0);
 
     drawBackground();
     drawWalls();
@@ -1517,7 +1521,7 @@ function loop() {
         const intensity = game.powerMode > 90 ? 1 : game.powerMode / 90;
         ctx.strokeStyle = `rgba(99, 102, 241, ${0.25 * intensity})`;
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(2 - canvasOffsetX, 2, canvas.width - 4, canvas.height - 4);
+        ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
     }
 
     drawReadyOverlay();
@@ -1553,7 +1557,7 @@ canvas.addEventListener('touchend', e => {
         else setDir(0, swipeDy > 0 ? 1 : -1);
     } else {
         const rect = canvas.getBoundingClientRect();
-        const tapX = (endX - rect.left) * (canvas.width / rect.width) - canvasOffsetX;
+        const tapX = (endX - rect.left) * (canvas.width / rect.width);
         const tapY = (endY - rect.top) * (canvas.height / rect.height);
         const playerCx = player.x + TILE_SIZE / 2;
         const playerCy = player.y + TILE_SIZE / 2;
@@ -1575,7 +1579,6 @@ startBtn.onclick = () => {
 };
 
 let gameScale = 1;
-let canvasOffsetX = 0;
 const gameWrapper = document.getElementById('game-wrapper');
 
 function getViewport() {
@@ -1604,34 +1607,7 @@ function resizeGame() {
     gameWrapper.style.marginTop = marginTop + 'px';
 }
 
-function recalcCanvasSize() {
-    const { vw, vh } = getViewport();
-    const isMobile = vw <= 700;
-    const mapW = mapCols * TILE_SIZE;
-    const mapH = mapRows * TILE_SIZE;
-    const statsH = isMobile ? 46 : 40;
-    if (isMobile) {
-        const targetAspect = (vw - 6) / (vh - 6 - statsH);
-        const mapAspect = mapW / mapH;
-        if (targetAspect > mapAspect) {
-            canvas.width = Math.round(mapH * targetAspect);
-            canvas.height = mapH;
-            canvasOffsetX = Math.round((canvas.width - mapW) / 2);
-        } else {
-            canvas.width = mapW;
-            canvas.height = mapH;
-            canvasOffsetX = 0;
-        }
-    } else {
-        canvas.width = mapW;
-        canvas.height = mapH;
-        canvasOffsetX = 0;
-    }
-}
-window.addEventListener('resize', () => { recalcCanvasSize(); resizeGame(); });
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => { recalcCanvasSize(); resizeGame(); });
-}
+window.addEventListener('resize', resizeGame);
 
 initBg(); setup(); resizeGame();
 drawBackground(); drawWalls(); drawDots();

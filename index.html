@@ -1546,10 +1546,12 @@ window.addEventListener('keydown', e => {
 
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener('touchstart', e => {
+    if (!game.running) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
 }, { passive: true });
 document.addEventListener('touchend', e => {
+    if (!game.running) return;
     const endX = e.changedTouches[0].clientX, endY = e.changedTouches[0].clientY;
     const swipeDx = endX - touchStartX, swipeDy = endY - touchStartY;
 
@@ -1567,8 +1569,7 @@ document.addEventListener('touchend', e => {
         if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 1 : -1, 0);
         else setDir(0, dy > 0 ? 1 : -1);
     }
-    e.preventDefault();
-});
+}, { passive: true });
 
 // ── Start ──
 startBtn.onclick = () => {
@@ -1584,9 +1585,7 @@ const gameWrapper = document.getElementById('game-wrapper');
 
 function getViewport() {
     const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-    let vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)')) || 0;
-    vh -= safeBottom;
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     return { vw, vh };
 }
 

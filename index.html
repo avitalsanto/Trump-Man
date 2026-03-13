@@ -640,18 +640,20 @@ class Pacman extends Entity {
 
     update() {
         if (game.deathAnim > 0 || game.readyTimer > 0) return;
-        if (this.isAtCenter()) {
-            if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
-                if (this.canMove(this.nextDir)) this.dir = { ...this.nextDir };
+        const steps = game.speedBoost > 0 ? 2 : 1;
+        for (let s = 0; s < steps; s++) {
+            if (this.isAtCenter()) {
+                if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
+                    if (this.canMove(this.nextDir)) this.dir = { ...this.nextDir };
+                }
+                if (!this.canMove(this.dir)) this.dir = { x: 0, y: 0 };
             }
-            if (!this.canMove(this.dir)) this.dir = { x: 0, y: 0 };
+            const speed = this.baseSpeed * game.speedMultiplier;
+            this.x += this.dir.x * speed;
+            this.y += this.dir.y * speed;
+            if (this.x < -TILE_SIZE) this.x = mapCols * TILE_SIZE;
+            if (this.x > mapCols * TILE_SIZE) this.x = -TILE_SIZE;
         }
-        const speed = this.baseSpeed * game.speedMultiplier * (game.speedBoost > 0 ? 2 : 1);
-        this.x += this.dir.x * speed;
-        this.y += this.dir.y * speed;
-        if (this.x < -TILE_SIZE) this.x = mapCols * TILE_SIZE;
-        if (this.x > mapCols * TILE_SIZE) this.x = -TILE_SIZE;
-
         if (this.dir.x !== 0 || this.dir.y !== 0) {
             this.trailCounter++;
             if (this.trailCounter % 3 === 0) addTrail(this.x, this.y, game.powerMode > 0 ? '#f87171' : '#d4a56a');
@@ -763,14 +765,14 @@ class Ghost extends Entity {
                         const dist = (gp.col+d.x-target.col)**2 + (gp.row+d.y-target.row)**2;
                         if (dist < bestDist) { bestDist = dist; best = d; }
                     });
-                    const randomChance = Math.max(0.3, 0.6 - game.level * 0.03);
+                    const randomChance = Math.max(0.35, 0.7 - game.level * 0.03);
                     this.dir = Math.random() < randomChance ? valid[Math.floor(Math.random() * valid.length)] : best;
                 }
             } else {
                 this.dir = { x: -this.dir.x, y: -this.dir.y };
             }
         }
-        let ms = this.baseSpeed * game.speedMultiplier;
+        let ms = this.baseSpeed;
         if (game.powerMode > 0) ms = 1;
         if (game.freezeTimer > 0) ms = 0;
         this.x += this.dir.x * ms; this.y += this.dir.y * ms;
@@ -1543,16 +1545,15 @@ window.addEventListener('keydown', e => {
 });
 
 let touchStartX = 0, touchStartY = 0;
-canvas.addEventListener('touchstart', e => {
+document.addEventListener('touchstart', e => {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-    e.preventDefault();
-});
-canvas.addEventListener('touchend', e => {
+}, { passive: true });
+document.addEventListener('touchend', e => {
     const endX = e.changedTouches[0].clientX, endY = e.changedTouches[0].clientY;
     const swipeDx = endX - touchStartX, swipeDy = endY - touchStartY;
 
-    if (Math.max(Math.abs(swipeDx), Math.abs(swipeDy)) >= 15) {
+    if (Math.max(Math.abs(swipeDx), Math.abs(swipeDy)) >= 30) {
         if (Math.abs(swipeDx) > Math.abs(swipeDy)) setDir(swipeDx > 0 ? 1 : -1, 0);
         else setDir(0, swipeDy > 0 ? 1 : -1);
     } else {
